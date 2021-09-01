@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-gray-300">
+  <div class="bg-gray-300 h-full overflow-auto">
     <div class="flex text-gray-900 text-2xl select-none">
       <div 
         class="flex-auto flex justify-center p-4 border-r"
@@ -16,52 +16,29 @@
         Upgrages
       </div>
     </div>
-    <div 
-      v-if="shopMode"
-      class="px-2 py-4 space-y-2"
-    >
-      <generator-option
-        v-for="(generator, i) in generators"
-        :key="`generator-${i}`"
-        :model="generator"
-        :score="score"
-        @purchase="(newGenerator) => $emit('purchase', newGenerator)"
-      />
-    </div>
-    <div 
-      v-else
-      class="px-2 py-4 space-y-2"
-    >
-      <upgrade-option
-        v-for="(upgrade, i) in upgrades"
-        :key="`upgrade-${i}`"
-        :model="upgrade"
-        :score="score"
-        @purchase="(newUpgrade) => $emit('purchase', newUpgrade)"
+    <div class="p-4 flex flex-col h-full flex-grow space-y-2">
+      <shop-option 
+        v-for="upgrade in world.upgrades"
+        :key="upgrade.name"
+        :item="upgrade"
+        :world="world"
       />
     </div>
   </div>
 </template>
 <script>
-import generators from '../generators';
-import upgrades from '../upgrades';
-
-import GeneratorOption from './GeneratorOption.vue';
-import UpgradeOption from './UpgradeOption.vue';
+import ShopOption from './ShopOption';
 export default {
   components: {
-    UpgradeOption,
-    GeneratorOption,
+    ShopOption
   },
 
   props: {
-    score: { type: Number, required: true}
+    world: { type: Object, required: true}
   },
 
   data() {
     return {
-      generators,
-      upgrades,
       shopMode: true
     }
   }

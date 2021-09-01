@@ -1,29 +1,40 @@
 <template>
   <floater :floats="floats" />
-  <div class="max-w-2xl">
-    <div class="flex justify-center space-x-8">
-      <div>
-        Community Cases: {{ cases }}
+  <div class="flex flex-col-reverse md:flex-row min-h-screen">
+    <div class="flex flex-col w-full md:max-w-lg lg:max-w-2xl">
+      <div class="flex justify-center space-x-8">
       </div>
-      <div>
-        Cases Per Second: {{ casesPerSecond }}
+      <div class="flex justify-center p-4">
+        <earth class="select-none" @earth-click="handleEarthClick" />
       </div>
+      <shop class="flex-grow" :world="world" />
     </div>
-    <div class="flex justify-center p-4">
-      <earth class="select-none" @earth-click="handleEarthClick" />
+
+    <div class="flex flex-col flex-grow bg-gray-700 text-white space-y-2">
+      <div class="flex justify-center space-x-4">
+        <div>
+          Community Cases: {{ world.cases }}
+        </div>
+        <div>
+          Cases Cured: {{ world.cured }}
+        </div>
+        <div>
+          Day: {{ world.day }}
+        </div>
+      </div>
+      <news :news="news" />
     </div>
   </div>
-  <shop
-    :score="cases"
-    @purchase="handlePurchase"
-  />
 </template>
-
 <script>
 import Earth from './components/Earth';
-import Shop from './shop/Shop';
 import ScoreFloater from './floater/ScoreFloater';
 import Floater from './floater/Floater';
+import World from './World';
+import Shop from './shop/Shop';
+import News from './news/News';
+import easyEvents from './event/easy';
+const dayInSeconds = 3000;
 
 export default {
   name: 'App',
@@ -32,59 +43,57 @@ export default {
     Earth,
     Floater,
     Shop,
+    News
   },
 
   data() {
     return {
-      cases: 0,
       floats: [],
-      purchases: [],
-      addCasesInterval: null,
-    }
-  },
-
-  computed: {
-    casesPerSecond() {
-      return Math.floor(this.caseGenerator * this.caseMultiplier);
-    },
-
-    caseMultiplier() {
-      return this.purchases
-        .filter(p => p.type == 'upgrade')
-        .map(p => p.multiplier)
-        .reduce((a, b) => a + b, 1) || 1; 
-    },
-
-    caseGenerator() {
-      return this.purchases
-        .filter(p => p.type == 'generator')
-        .map(p => p.spread)
-        .reduce((a, b) => a + b, 0);
+      world: null,
+      news: [],
+      increaseCases: 0,
+      floatInterval: null,
+      spreadInterval: null,
+      eventInterval: null,
     }
   },
 
   created() {
-    window.setInterval(this.destroyFloats, 15000)
-    window.setInterval(this.addCommunityCases, 1000);
+    this.world = new World();
+    this.floatInterval = window.setInterval(this.destroyFloats, 5000);
+    this.spreadInterval = window.setInterval(this.spread, dayInSeconds);
+    this.eventInterval = window.setInterval(this.newsEvent, dayInSeconds * 1);
   },
 
   methods: {
     handleEarthClick(event) {
-      this.cases += 1,
-      this.floats.push(ScoreFloater.fromEvent({ event, score: 1 }));
+      this.world.cureCases();
+      this.floats.push(ScoreFloater.fromEvent({
+        event,
+        score: this.world.clickValue,
+      }));
     },
 
     destroyFloats() {
-      this.floats = [];
+      this.floats = [
+        ...this.floats.slice(this.floats.length == 30 ? 0 : 30),
+      ];
     },
 
-    addCommunityCases() {
-      this.cases += this.casesPerSecond;
+    spread() {
+      this.increaseCases = this.world.spread();
     },
 
-    handlePurchase(purchase) {
-      this.cases -= purchase.cost;
-      this.purchases.push(purchase);
+    newsEvent() {
+      if (this.world.day < 100) {
+        this.addEvent(easyEvents);
+      }
+    },
+
+    addEvent(events) {
+      const event = events[Math.floor(Math.random() * events.length)];
+      this.world.consumeEvent(event);
+      this.news.push(event);
     }
   }
 }

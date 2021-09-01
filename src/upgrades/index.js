@@ -1,9 +1,5 @@
-import TravelBubble from "./TravelBubble";
-import Mutate from "./Mutate";
-import FiveGVaccine from "./FiveGVaccine";
+import Clicker from './Clicker';
 
 export default [
-  TravelBubble,
-  Mutate,
-  FiveGVaccine,
+  Clicker,
 ]
